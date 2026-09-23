@@ -1,6 +1,6 @@
 # Progress
 
-Commit Message: updateSubmodules only counts changed tracked files as unsaved work
+Commit Message: updateSubmodules fetches without walking into nested submodules
 
 Features (Planned):
 - Roll the include out to every repo in CodingMain.

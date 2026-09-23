@@ -83,7 +83,7 @@ proc pinToNewest(p: string) =
     # nested submodules are left out (the update below re-pins them), and so
     # are untracked files (a checkout never overwrites them, git refuses)
     stop(p & " has uncommitted work. Commit it inside the submodule first.")
-  exec "git -C " & quoteShell(p) & " fetch --quiet origin"
+  exec "git -C " & quoteShell(p) & " fetch --quiet --no-recurse-submodules origin"
   b = pinBranch(p)
   exec "git -C " & quoteShell(p) & " checkout --quiet --detach origin/" & b
   exec "git -C " & quoteShell(p) & " submodule update --quiet --init --recursive"

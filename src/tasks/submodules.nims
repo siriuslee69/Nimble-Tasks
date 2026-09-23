@@ -45,6 +45,12 @@ proc submoduleName(p: string): string =
     stop(p & " is not listed in .gitmodules.")
   result = t[len("submodule.") .. t.len - len(".path") - 1]
 
+proc isGitlink(p: string): bool =
+  ## p: path listed in .gitmodules; true only when git really tracks it as
+  ## a submodule (mode 160000). A stale entry may point at a symlink or at
+  ## nothing at all.
+  result = captureGit("ls-files -s -- " & quoteShell(p)).startsWith("160000")
+
 proc isFrozen(p: string): bool =
   result = false
   when declared(frozenSubmodules):
@@ -98,7 +104,9 @@ sharedTask updateSubmodules, "Pin every submodule to the newest commit of its ma
     stop("No .gitmodules found - this repo has no submodules to update.")
   exec "git submodule update --quiet --init"
   for p in P:
-    if isFrozen(p):
+    if not isGitlink(p):
+      echo "  " & p & "  listed in .gitmodules but not a submodule, skipped"
+    elif isFrozen(p):
       echo "  " & p & "  frozen, left as is"
     else:
       pinToNewest(p)

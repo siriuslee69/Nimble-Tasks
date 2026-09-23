@@ -1,6 +1,6 @@
 # Progress
 
-Commit Message: Look inside src/<package>/ too; push with -u so fresh branches work
+Commit Message: autopush refuses a detached HEAD and rebases when the remote is ahead
 
 Features (Planned):
 - Roll the include out to every repo in CodingMain.

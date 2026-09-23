@@ -61,6 +61,16 @@ proc isGeneratedOrLocalArtifact(p: string): bool =
     s == "nimble.paths" or s == "nimble.develop" or
     s.startsWith("agents/.local")
 
+proc behindUpstream(): int =
+  ## How many commits the remote branch has that this one lacks; 0 when the
+  ## branch has no remote twin yet.
+  var
+    t: tuple[output: string, exitCode: int] = gitRaw("rev-list --count HEAD..@{u}")
+    n: int = 0
+  if t.exitCode == 0:
+    n = parseInt(t.output.strip())
+  result = n
+
 proc firstArtifact(staged: string): string =
   ## staged: newline-separated paths; the first build/local one, or "".
   var
@@ -88,6 +98,10 @@ sharedTask autopush, "Add, commit, and push after rejecting generated/local arti
   else:
     writeFile(msgPath, resolveCommitMessage(resolveProgressPath()) & "\n")
     exec "git commit --file " & msgPath
+  if captureGit("branch --show-current").strip().len == 0:
+    stop("Refusing autopush from a detached HEAD. Check out a branch first.")
+  if behindUpstream() > 0:
+    exec "git pull --rebase --autostash"
   exec "git push -u origin HEAD"   # -u: also works on a fresh branch
 
 sharedTask switch, "Toggle the working branch between nightly and main":

@@ -79,7 +79,8 @@ proc pinToNewest(p: string) =
   var
     before: string = gitIn(p, "rev-parse --short HEAD")
     b: string = ""
-  if gitIn(p, "status --porcelain").len > 0:
+  if gitIn(p, "status --porcelain --ignore-submodules=all").len > 0:
+    # nested submodules are left out: the update below re-pins them anyway
     stop(p & " has uncommitted work. Commit it inside the submodule first.")
   exec "git -C " & quoteShell(p) & " fetch --quiet origin"
   b = pinBranch(p)

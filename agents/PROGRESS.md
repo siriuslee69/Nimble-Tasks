@@ -1,6 +1,6 @@
 # Progress
 
-Commit Message: autopush refuses a detached HEAD and rebases when the remote is ahead
+Commit Message: updateSubmodules ignores nested submodule pointers when checking for unsaved work
 
 Features (Planned):
 - Roll the include out to every repo in CodingMain.

@@ -1,6 +1,6 @@
 # Progress
 
-Commit Message: extraArtifacts match anywhere in a path; gradle/kotlin caches refused in subfolders too
+Commit Message: updateSubmodules only counts changed tracked files as unsaved work
 
 Features (Planned):
 - Roll the include out to every repo in CodingMain.

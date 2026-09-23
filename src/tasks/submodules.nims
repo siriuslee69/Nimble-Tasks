@@ -105,7 +105,8 @@ sharedTask updateSubmodules, "Pin every submodule to the newest commit of its ma
   if captureGit("diff --cached --name-only -- " & P.join(" ")).strip().len == 0:
     echo "All submodules already sit on their newest commit."
   else:
-    exec "git commit --quiet -m \"Pin submodules to newest main\" -- " & P.join(" ")
+    # .gitmodules goes along so a freshly added submodule never lands without it
+    exec "git commit --quiet -m \"Pin submodules to newest main\" -- .gitmodules " & P.join(" ")
     echo "Committed the new pins. Push with `nimble autopush` or `git push`."
 
 sharedTask submoduleStatus, "Show which commit every submodule is pinned to":

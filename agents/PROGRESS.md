@@ -1,6 +1,6 @@
 # Progress
 
-Commit Message: updateSubmodules fetches without walking into nested submodules
+Commit Message: The pin commit carries .gitmodules along with the submodules
 
 Features (Planned):
 - Roll the include out to every repo in CodingMain.

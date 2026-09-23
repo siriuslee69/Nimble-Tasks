@@ -33,7 +33,7 @@ proc compileAndRun(A: seq[string]) =
   ## A: Nim programs; each is compiled and run, the first failure stops.
   mkDir(joinPath("build", "evaluation"))
   for p in A:
-    exec "nim c -r " & overrideOf(nimFlags) & " --hints:off -o:" &
+    exec "nim c -r" & presetFlag() & " " & overrideOf(nimFlags) & " --hints:off -o:" &
       quoteShell(joinPath("build", "evaluation", exeName(splitFile(p).name))) &
       " " & quoteShell(p)
 

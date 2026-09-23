@@ -234,6 +234,8 @@ Nimble-Tasks/
 ├── nimble_tasks.nimble          includes the shared file on itself
 ├── src/
 │   ├── nimbleTasks.nims         the one file repos include
+│   ├── preset.nims              build presets (configs/*.toml), included
+│   │                            by a repo's config.nims, not its .nimble
 │   └── tasks/
 │       ├── core.nims            names list, hint, sharedTask, lookups
 │       ├── git.nims
@@ -251,6 +253,46 @@ name to `sharedTaskNames` in `core.nims`. Forgetting the second step stops
 the build with `<name> is missing from sharedTaskNames`. (ᵔᴥᵔ)
 
 Testing: `nimble test`.
+
+---
+
+## ╰⟢ Build presets (preset.nims) 🌾
+
+One `.toml` file per kind of build instead of a long flag list. A repo keeps
+them in `configs/`; `default.toml` lists every switch the repo has, at its
+default value, and applies to every build.
+
+```text
+nim c app.nim                     configs/default.toml
+nim c -d:preset=iot app.nim       default.toml, then configs/iot.toml over it
+nimble buildCli -d:preset=iot     the same: shared tasks pass it on to nim
+nim c -d:preset=iot -d:x=1 ...    the command line wins over both files
+```
+
+```toml
+[nim]                         # --opt:size ...
+opt = "size"
+[define]                      # -d:bifrostKems=saber,x25519 ; true -> -d:name
+bifrostKems = "saber,x25519"  # "" or false -> not set (the built-in default)
+[passC]
+flags = ["-flto"]
+[runtime]                     # not a flag: the program and nix/module.nix read it
+```
+
+Wire it in with four lines at the end of `config.nims`:
+
+```nim
+when fileExists(thisDir() & "/../Nimble-Tasks/src/preset.nims"):
+  include "../Nimble-Tasks/src/preset.nims"
+elif fileExists(thisDir() & "/submodules/Nimble-Tasks/src/preset.nims"):
+  include "submodules/Nimble-Tasks/src/preset.nims"
+applyPreset()
+```
+
+The files applied reach the program as `-d:presetFiles=a.toml;b.toml`, so
+its own code can read other sections while compiling. Why `-d:preset=`
+and not `--preset:`: nim refuses any `--option` it does not know before
+`config.nims` runs, while a `-d:` define may carry any name.
 
 ---
 

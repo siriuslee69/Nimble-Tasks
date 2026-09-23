@@ -16,6 +16,13 @@ import runePragmas
 const
   sharedFile: string = currentSourcePath().parentDir.parentDir.parentDir /
     "src" / "nimbleTasks.nims"
+  presetFile: string = currentSourcePath().parentDir.parentDir.parentDir /
+    "src" / "preset.nims"
+  presetProbe: string = "const\n  flavour {.strdefine.}: string = \"none\"\n" &
+    "  level {.intdefine.}: int = -1\n" &
+    "echo \"flavour=\", flavour, \" level=\", level, \" size=\", " &
+    "compileOption(\"opt\", \"size\")\n"
+    ## The program the preset repo builds: it prints what reached nim.
 
 var
   root: string = getTempDir() / "nimble_tasks_fixture"
@@ -72,6 +79,25 @@ proc buildFixture() {.role: helper.} =
     "  include \"../Nimble-Tasks/src/nimbleTasks.nims\"\n" &
     "else:\n  {.error: \"Nimble-Tasks not found\".}\n")
 
+proc buildPresetFixture() {.role: helper.} =
+  ## presets/ -- a repo whose config.nims includes preset.nims:
+  ##   configs/default.toml  flavour = "plain", level = 1
+  ##   configs/tiny.toml     flavour = "tiny", opt = "size", passC list
+  var
+    dir: string = root / "presets"
+  initRepo(dir)
+  writeFile(dir / "presets.nimble", nimbleFile("", ""))
+  writeFile(dir / "config.nims", "include \"" & presetFile & "\"\napplyPreset()\n")
+  createDir(dir / "configs")
+  writeFile(dir / "configs" / "default.toml",
+    "[define]\nflavour = \"plain\"  # comment\nlevel = 1\n[passC]\nflags = []\n")
+  writeFile(dir / "configs" / "tiny.toml",
+    "[nim]\nopt = \"size\"\n[define]\nflavour = \"tiny\"\n" &
+    "[passC]\nflags = [\"-DA=1\",\n         \"-DB=2\"]\n[runtime]\nignored = 5\n")
+  createDir(dir / "src" / "clients" / "cli")
+  writeFile(dir / "src" / "clients" / "cli" / "app_cli.nim", presetProbe)
+  mustSh(dir, "git add -A && git commit -qm init")
+
 proc nimble(dir, args: string): tuple[output: string, exitCode: int] {.role: helper.} =
   result = sh(root / dir, "nimble --silent " & args & " 2>&1")
 
@@ -80,6 +106,7 @@ putEnv("GIT_CONFIG_COUNT", "1")
 putEnv("GIT_CONFIG_KEY_0", "protocol.file.allow")
 putEnv("GIT_CONFIG_VALUE_0", "always")
 buildFixture()
+buildPresetFixture()
 
 suite "shared nimble tasks":
   # {.testKind: tkIntegration.}
@@ -161,3 +188,37 @@ suite "shared nimble tasks":
       t: tuple[output: string, exitCode: int] = nimble("app", "sharedTasks")
     check "runTests   <- replaced by this repo" in t.output
     check "updateSubmodules" in t.output
+
+suite "build presets (preset.nims)":
+  # {.testKind: tkIntegration, covers: "applyPreset".}
+  test "configs/default.toml applies to a build that names no preset":
+    var
+      t: tuple[output: string, exitCode: int] = nimble("presets", "runCli")
+    check t.exitCode == 0
+    check t.output.contains("flavour=plain level=1 size=false")
+
+  # {.testKind: tkIntegration, covers: "presetFlag".}
+  test "nimble hands -d:preset on, and the preset lies over the base":
+    var
+      t: tuple[output: string, exitCode: int] = nimble("presets",
+        "runCli -d:preset=tiny")
+    check t.exitCode == 0
+    check t.output.contains("flavour=tiny level=1 size=true")
+
+  # {.testKind: tkIntegration, covers: "applyPreset".}
+  test "the command line wins over every preset file":
+    var
+      t: tuple[output: string, exitCode: int] = sh(root / "presets",
+        "nim c -r --hints:off -d:preset=tiny -d:flavour=cmd -o:build/p " &
+        "src/clients/cli/app_cli.nim 2>&1")
+    check t.exitCode == 0
+    check t.output.contains("flavour=cmd level=1 size=true")
+
+  # {.testKind: tkEdgeCase, covers: "applyPreset".}
+  test "a preset that does not exist stops the build and names the file":
+    var
+      t: tuple[output: string, exitCode: int] = sh(root / "presets",
+        "nim c --hints:off -d:preset=nope -o:build/p " &
+        "src/clients/cli/app_cli.nim 2>&1")
+    check t.exitCode != 0
+    check t.output.contains("configs/nope.toml")

@@ -121,6 +121,18 @@ proc stop(msg: string) =
   ## Every shared task fails the same way: one clear line, exit code 1.
   quit("🥀 (╥﹏╥) " & msg, 1)
 
+proc presetFlag(): string =
+  ## The `-d:preset=...` given to nimble, ready to hand on to nim, or "".
+  ## `nimble buildCli -d:preset=iot` -> " -d:preset=iot" (see preset.nims).
+  var
+    i: int = 1
+    arg: string = ""
+  while i <= paramCount():
+    arg = paramStr(i)
+    if arg.startsWith("-d:preset=") or arg.startsWith("--define:preset="):
+      return " " & quoteShell(arg)
+    i = i + 1
+
 proc gitRaw(args: string): tuple[output: string, exitCode: int] =
   ## args: one git subcommand line, run in the repo nimble was called in.
   ## gorgeEx alone would run it in THIS file's folder, i.e. in Nimble-Tasks.

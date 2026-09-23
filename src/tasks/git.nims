@@ -43,17 +43,19 @@ proc captureGit(args: string): string =
 
 proc isGeneratedOrLocalArtifact(p: string): bool =
   ## p: one staged repo-relative path checked against build/local output.
-  ## Repos add their own patterns with `const extraArtifacts = [...]`.
+  ## Repos add their own with `const extraArtifacts = [...]`; each one
+  ## matches anywhere in the path ("/.gradle/" catches app/.gradle/x too).
   var
     s: string = p.replace('\\', '/')
     extra: bool = false
   when declared(extraArtifacts):
     for e in extraArtifacts:
-      extra = extra or s.startsWith(e)
+      extra = extra or s.contains(e)
   result = extra or splitPath(s).tail.startsWith(".fuse_hidden") or
     s.startsWith("nimcache") or
     s.startsWith("build/") or s.startsWith("builds/") or
     s.startsWith(".gradle/") or s.startsWith(".kotlin/") or
+    s.contains("/.gradle/") or s.contains("/.kotlin/") or
     s.endsWith(".exe") or s.endsWith(".dll") or s.endsWith(".so") or
     s.endsWith(".dylib") or s.endsWith(".o") or s.endsWith(".obj") or
     s.endsWith(".a") or s.endsWith(".lib") or s.endsWith(".pdb") or

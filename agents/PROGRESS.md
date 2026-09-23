@@ -1,6 +1,6 @@
 # Progress
 
-Commit Message: updateSubmodules ignores nested submodule pointers when checking for unsaved work
+Commit Message: extraArtifacts match anywhere in a path; gradle/kotlin caches refused in subfolders too
 
 Features (Planned):
 - Roll the include out to every repo in CodingMain.

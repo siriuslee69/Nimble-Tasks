@@ -206,6 +206,9 @@ server    src/server/server.nim
 android   android/   src/clients/android/   src/client/frontend/android/
 ```
 
+Each place is also tried inside `src/<package>/`, e.g.
+`src/proto/client/frontend/cli/app_cli.nim` for a package called `proto`.
+
 `run…` makes a debug program and starts it. `build…` makes a release
 program at `build/<package>_<frontend>`, e.g. `build/tyr_cli`.
 

@@ -23,6 +23,9 @@
 ##                                         src/server/main.nim
 ##                                         src/server/app.nim
 ##
+## Each place is also tried inside src/<package>/ (src/proto/client/… for a
+## package called proto), which is where nimble's package layout puts it.
+##
 ## A repo whose file sits elsewhere says so before the include:
 ##
 ##     const
@@ -60,6 +63,17 @@ proc candidatesOf(kind: string): seq[string] =
   else:
     result = @[]
 
+proc searchList(kind: string): seq[string] =
+  ## Every usual place, then the same places inside src/<package>/, which is
+  ## where nimble's package layout puts them (src/proto/client/… for proto).
+  var
+    B: seq[string] = candidatesOf(kind)
+    T: seq[string] = candidatesOf(kind)
+    pkg: string = packageTag()
+  for b in B:
+    T.add("src/" & pkg & b[len("src") .. ^1])
+  result = T
+
 proc overrideEntry(kind: string): string =
   ## The repo's `<kind>Entry` const, or "".
   case kind
@@ -90,7 +104,7 @@ proc findEntry(kind: string): string =
   if t.len > 0 and not fileExists(t):
     stop(kind & "Entry points at " & t & ", which does not exist.")
   if t.len == 0:
-    t = firstExisting(candidatesOf(kind))
+    t = firstExisting(searchList(kind))
   result = t
 
 proc entryOf(kind: string): string =
@@ -99,7 +113,7 @@ proc entryOf(kind: string): string =
     t: string = findEntry(kind)
   if t.len == 0:
     stop("No " & kind & " entry file found. Looked in:\n    " &
-      candidatesOf(kind).join("\n    ") &
+      searchList(kind).join("\n    ") &
       "\n  Put it in one of those, or set `const " & kind &
       "Entry: string = \"path/to/file.nim\"` before the include.")
   result = t

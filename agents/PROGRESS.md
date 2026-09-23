@@ -1,6 +1,6 @@
 # Progress
 
-Commit Message: Shared nimble tasks: git flow, submodules, frontends, evaluation
+Commit Message: Look inside src/<package>/ too; push with -u so fresh branches work
 
 Features (Planned):
 - Roll the include out to every repo in CodingMain.

@@ -88,7 +88,7 @@ sharedTask autopush, "Add, commit, and push after rejecting generated/local arti
   else:
     writeFile(msgPath, resolveCommitMessage(resolveProgressPath()) & "\n")
     exec "git commit --file " & msgPath
-  exec "git push"
+  exec "git push -u origin HEAD"   # -u: also works on a fresh branch
 
 sharedTask switch, "Toggle the working branch between nightly and main":
   var

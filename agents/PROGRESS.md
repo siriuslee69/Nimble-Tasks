@@ -1,6 +1,6 @@
 # Progress
 
-Commit Message: updateSubmodules skips .gitmodules entries that are not real submodules
+Commit Message: updateSubmodules sees moved pins even when a submodule is set to ignore = all
 
 Features (Planned):
 - Roll the include out to every repo in CodingMain.

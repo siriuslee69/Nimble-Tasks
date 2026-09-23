@@ -110,7 +110,9 @@ sharedTask updateSubmodules, "Pin every submodule to the newest commit of its ma
       echo "  " & p & "  frozen, left as is"
     else:
       pinToNewest(p)
-  if captureGit("diff --cached --name-only -- " & P.join(" ")).strip().len == 0:
+  # --ignore-submodules=none: a local `ignore = all` would hide a moved pin
+  if captureGit("diff --cached --ignore-submodules=none --name-only -- " &
+      P.join(" ")).strip().len == 0:
     echo "All submodules already sit on their newest commit."
   else:
     # .gitmodules goes along so a freshly added submodule never lands without it

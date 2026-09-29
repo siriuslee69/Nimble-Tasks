@@ -88,11 +88,11 @@ proc presetStripComment(line: string): string =
 
 proc presetUnquote(s: string, n: int): string =
   ## s/n: one value and its line number -> the plain text. "x" -> x;
-  ## numbers and true/false stay as written.
+  ## numbers (1, -2, 0.7, 250_000) and true/false stay as written.
   if s.len >= 2 and s[0] == '"' and s[^1] == '"':
     return s[1 .. ^2]
   if s in ["true", "false"] or (s.len > 0 and s.replace("_", "").allCharsInSet(
-      {'0' .. '9', '-'})):
+      {'0' .. '9', '-', '.'})):
     return s.replace("_", "")
   presetStop("line " & $n & ": value must be \"text\", a number, true or " &
     "false, got: " & s)

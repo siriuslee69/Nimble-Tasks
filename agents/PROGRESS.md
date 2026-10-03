@@ -6,6 +6,7 @@ Features (Planned):
 - Roll the include out to every repo in CodingMain.
 
 Features (Done):
+- runTests/test/runBenchmarks/runStatistics/runExamples build every program in parallel (src/tools/parallelBuild.nim, osproc.execProcesses, one per core, each build's output in its own .log) and run them one at a time. Builds use -d:release (checks and asserts stay on): Geist's suite went from 11:24 to 2:09. Falls back to one-by-one builds when the helper cannot be built.
 - preset.nims (2026-09-23): configs/default.toml always, -d:preset=<name>
   laid over it key by key, the command line over both. [nim] [define]
   [passC] [passL] become compiler switches; other sections are left for the

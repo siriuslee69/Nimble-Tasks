@@ -144,6 +144,19 @@ other        clean               delete build/ and nimcache/
              sharedTasks         print this list
 ```
 
+The evaluation tasks build every program FIRST, side by side (one per CPU core,
+by `src/tools/parallelBuild.nim`), then run them ONE AT A TIME in order:
+
+```
+build   test_a  test_b  test_c ...   together     -d:release (checks and asserts stay on)
+run     test_a, then test_b, ...     one by one   tests may share ports and temp folders
+```
+
+`-d:release` matters: a debug build ran Argon2id 19x slower, and Geist's suite
+dropped from 11 min 24 s to 2 min 9 s. For a stack trace, rebuild the one
+failing test without it. Without Rune-Pragmas next to Nimble-Tasks the helper
+cannot be built, and the programs are built one at a time instead.
+
 ## ├⟢ How a call travels 🍣
 
 ```

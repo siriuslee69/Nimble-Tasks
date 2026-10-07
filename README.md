@@ -49,6 +49,7 @@ nimble runCli          # runs the repo's command-line frontend
 │ src/ of this repo         │ webuiEntry, cliEntry, tuiEntry,         │
 │                           │ owlEntry, serverEntry, androidDir       │
 │                           │ nimFlags, webuiFlags, cliFlags, …       │
+│                           │ nimCommand        compiler or wrapper  │
 │                           │ frozenSubmodules  never auto-updated    │
 │                           │ extraArtifacts    autopush refuses them │
 └──────────────────────────┴──────────────────────────────────────────┘

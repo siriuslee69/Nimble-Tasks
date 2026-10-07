@@ -108,6 +108,12 @@ template overrideOf(sym: untyped): string =
   ## The repo's own value for `sym` when it declared one, else "".
   when declared(sym): sym else: ""
 
+proc nimCompiler(): string =
+  ## Optional compiler command, e.g. a repo's dependency-shell launcher.
+  result = overrideOf(nimCommand)
+  if result.len == 0:
+    result = "nim"
+
 template sharedTask(name: untyped; description: string; body: untyped) =
   ## `task`, registered only when the repo did not claim the name.
   static:

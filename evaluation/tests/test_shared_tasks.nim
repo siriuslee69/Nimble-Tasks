@@ -189,6 +189,31 @@ suite "shared nimble tasks":
     check "runTests   <- replaced by this repo" in t.output
     check "updateSubmodules" in t.output
 
+suite "compiler command override":
+  # {.testKind: tkIntegration, covers: "nimCompiler".}
+  test "compiler wrapper receives frontend and evaluation arguments":
+    var
+      dir: string = root / "compiler"
+      wrapped: string = ""
+      build: tuple[output: string, exitCode: int] = ("", -1)
+      tests: tuple[output: string, exitCode: int] = ("", -1)
+    initRepo(dir)
+    writeFile(dir / "compiler.nimble", nimbleFile(
+      "const nimCommand = \"sh compiler.sh\"\n", ""))
+    writeFile(dir / "compiler.sh", "#!/bin/sh\nprintf '%s\\n' \"$*\" >> compiler.log\nexec nim \"$@\"\n")
+    createDir(dir / "src" / "clients" / "cli")
+    writeFile(dir / "src" / "clients" / "cli" / "app_cli.nim", "echo \"wrapped frontend\"\n")
+    createDir(dir / "evaluation" / "tests")
+    writeFile(dir / "evaluation" / "tests" / "test_wrapper.nim", "echo \"wrapped test\"\n")
+    build = nimble("compiler", "buildCli")
+    tests = nimble("compiler", "test")
+    check build.exitCode == 0
+    check tests.exitCode == 0
+    check "wrapped test" in tests.output
+    wrapped = readFile(dir / "compiler.log")
+    check "src/clients/cli/app_cli.nim" in wrapped
+    check "evaluation/tests/test_wrapper.nim" in wrapped
+
 suite "build presets (preset.nims)":
   # {.testKind: tkIntegration, covers: "applyPreset".}
   test "configs/default.toml applies to a build that names no preset":

@@ -75,10 +75,10 @@ proc compileAndRun(A: seq[string]) =
   mkDir(joinPath("build", "evaluation"))
   if helper.len == 0:
     for p in A:
-      exec "nim c -r" & flags & " -o:" & quoteShell(programPath(p)) & " " & quoteShell(p)
+      exec nimCompiler() & " c -r" & flags & " -o:" & quoteShell(programPath(p)) & " " & quoteShell(p)
     return
   for p in A:
-    jobs.add programPath(p) & ".log\tnim c" & flags & " -o:" & quoteShell(programPath(p)) &
+    jobs.add programPath(p) & ".log\t" & nimCompiler() & " c" & flags & " -o:" & quoteShell(programPath(p)) &
       " " & quoteShell(p) & "\n"
   writeFile(joinPath("build", "evaluation", "parallel.txt"), jobs)
   exec quoteShell(helper) & " " & quoteShell(joinPath("build", "evaluation", "parallel.txt"))

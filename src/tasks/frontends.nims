@@ -119,13 +119,13 @@ proc entryOf(kind: string): string =
   result = t
 
 proc runFrontend(kind: string) =
-  exec "nim c -r" & presetFlag() & " " & overrideFlags(kind) & " --nimcache:build/nimcache_" & kind &
+  exec nimCompiler() & " c -r" & presetFlag() & " " & overrideFlags(kind) & " --nimcache:build/nimcache_" & kind &
     " -o:" & quoteShell(joinPath("build", exeName(packageTag() & "_" & kind & "_debug"))) &
     " " & quoteShell(entryOf(kind))
 
 proc buildFrontend(kind: string) =
   mkDir("build")
-  exec "nim c -d:release" & presetFlag() & " " & overrideFlags(kind) & " --nimcache:build/nimcache_" &
+  exec nimCompiler() & " c -d:release" & presetFlag() & " " & overrideFlags(kind) & " --nimcache:build/nimcache_" &
     kind & "_release -o:" &
     quoteShell(joinPath("build", exeName(packageTag() & "_" & kind))) &
     " " & quoteShell(entryOf(kind))

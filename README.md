@@ -137,6 +137,7 @@ frontends    runWebui buildWebui    nim-webui window
              installAndroid         .apk onto a connected phone
              buildAll               every frontend the repo has
 evaluation   test = runTests     evaluation/tests/**/test*.nim
+             runStress           evaluation/stress/**/attack*.nim, stress*.nim
              runBenchmarks       evaluation/benchmarks/**/bench*.nim
              runStatistics       evaluation/statistics/**/stat*.nim
              runExamples         examples/**/*.nim

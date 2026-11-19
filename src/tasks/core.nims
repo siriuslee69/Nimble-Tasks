@@ -22,7 +22,7 @@
 import std/[os, strutils]
 
 const
-  sharedTaskNames: array[28, string] = [
+  sharedTaskNames: array[29, string] = [
     # git
     "autopush", "switch", "applyNightly", "mainToNightlySnap",
     # submodules
@@ -32,7 +32,7 @@ const
     "runOwl", "buildOwl", "runServer", "buildServer",
     "buildAndroid", "installAndroid", "buildAll",
     # evaluation
-    "test", "runTests", "runBenchmarks", "runStatistics", "runExamples",
+    "test", "runTests", "runStress", "runBenchmarks", "runStatistics", "runExamples",
     "evaluate",
     # housekeeping
     "clean", "sharedTasks"

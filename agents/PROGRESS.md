@@ -1,6 +1,13 @@
 # Progress
 
-Commit Message: Allow compiler wrappers in shared frontend and evaluation tasks
+Commit Message: Add runStress: attack*.nim and stress*.nim below evaluation/stress
+
+2026-11-19: `runStress` runs `evaluation/stress/**/attack*.nim` and `stress*.nim` the same
+way `runTests` runs tests (built together, run one at a time). `programsIn` takes several
+prefixes joined with `|`. A soak lives below `evaluation/stress/soak/` under another name and
+keeps its own task. NOT run by the author: no repo has been built against the new task yet
+(Nebel, Bifrost and Fjord are moved in the same session; their first `nimble runStress` is
+the test).
 
 Features (Planned):
 - Roll the include out to every repo in CodingMain.

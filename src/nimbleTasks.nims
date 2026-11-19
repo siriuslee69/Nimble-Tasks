@@ -19,7 +19,7 @@
 ##   submodules.nims  updateSubmodules, submoduleStatus, find
 ##   android.nims     buildAndroid, installAndroid
 ##   frontends.nims   run/build Webui, Cli, Tui, Owl, Server, buildAll
-##   evaluation.nims  test, runTests, runBenchmarks, runStatistics,
+##   evaluation.nims  test, runTests, runStress, runBenchmarks, runStatistics,
 ##                    runExamples, evaluate
 ##   (this file)      clean, sharedTasks
 

@@ -1,10 +1,11 @@
 ## ---------------------------------------------------------------------------
-## evaluation <- tests, benchmarks, statistics, examples, the Otter check
+## evaluation <- tests, stress, benchmarks, statistics, examples, the Otter check
 ## ---------------------------------------------------------------------------
 ##
 ##   task           folder                    files it runs (all subfolders)
 ##   -------------  ------------------------  -----------------------------
 ##   runTests       evaluation/tests/         test*.nim
+##   runStress      evaluation/stress/        attack*.nim and stress*.nim
 ##   runBenchmarks  evaluation/benchmarks/    bench*.nim
 ##   runStatistics  evaluation/statistics/    stat*.nim
 ##   runExamples    examples/                 *.nim
@@ -15,15 +16,34 @@
 ## same folder (paths.nim, fixtures.nim, …) are left alone.
 ## Each program lands in build/evaluation/, never beside its source.
 ## A missing folder, or a folder with nothing to run, stops with an error.
+##
+## Which folder a program belongs in:
+##
+##   tests/   quick, one process, the same answer every time: part of every gate
+##   stress/  needs a live daemon, a crowd, a memory ceiling, or timing over many
+##            runs. attack* is a stranger's seat run for real; stress* is load.
+##            A soak (hours long) lives below stress/soak/ under a name that is
+##            neither, with its own task, so runStress never starts it.
+
+proc hasPrefix(name, prefixes: string): bool =
+  ## name: a file name without its extension; prefixes: words joined with "|"
+  ## ("attack|stress"); "" matches every name.
+  var
+    P: seq[string] = prefixes.split('|')
+  result = false
+  for w in P:
+    if name.startsWith(w):
+      result = true
 
 proc programsIn(dir, prefix: string): seq[string] =
-  ## dir: folder searched with all subfolders; prefix: "" takes every .nim
+  ## dir: folder searched with all subfolders; prefix: "" takes every .nim,
+  ## "a|b" takes the files starting with a or with b
   var
     T: seq[string] = @[]
   if not dirExists(dir):
     stop(dir & " does not exist.")
   for p in walkDirRec(dir):
-    if p.endsWith(".nim") and splitFile(p).name.startsWith(prefix):
+    if p.endsWith(".nim") and hasPrefix(splitFile(p).name, prefix):
       T.add(p)
   if T.len == 0:
     stop("Nothing to run in " & dir & " (looking for " & prefix & "*.nim).")
@@ -99,6 +119,9 @@ sharedTask runTests, "Run every evaluation/tests/**/test*.nim":
 
 sharedTask test, "Run the tests (same as runTests)":
   compileAndRun(programsIn("evaluation/tests", "test"))
+
+sharedTask runStress, "Run every evaluation/stress/**/attack*.nim and stress*.nim (live daemons, crowds, attacks)":
+  compileAndRun(programsIn("evaluation/stress", "attack|stress"))
 
 sharedTask runBenchmarks, "Run every evaluation/benchmarks/**/bench*.nim":
   compileAndRun(programsIn("evaluation/benchmarks", "bench"))

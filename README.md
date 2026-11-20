@@ -32,6 +32,7 @@ else:
 ```sh
 nimble sharedTasks     # lists every shared task
 nimble runCli          # runs the repo's command-line frontend
+nimble runExamples     # builds a tiny repo from examples/example_useSharedTasks.nim and calls both
 ```
 
 ```

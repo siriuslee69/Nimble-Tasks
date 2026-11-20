@@ -13,6 +13,8 @@ tasks call it as `if enterGtkShell(): return`. Tests: suite "GTK shell hop" (fak
 pkg-config first on PATH; hop, no hop inside a shell, no hop when GTK is visible, no hop without a
 window). Checked for real: MimicWidgets `nimble runOwl` (window up), `nimble previewGallery` (exit 0).
 Not changed: repos that set `nimCommand` (Atlas-PackageManager) keep their own wrapper.
+Also: `examples/example_useSharedTasks.nim` (the repo had no example): writes a one-file repo into
+build/example_demo/ and calls `runCli` and `sharedTasks` on it; run by `nimble runExamples`.
 
 2026-11-19: `runStress` runs `evaluation/stress/**/attack*.nim` and `stress*.nim` the same
 way `runTests` runs tests (built together, run one at a time). `programsIn` takes several

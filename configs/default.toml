@@ -1,0 +1,25 @@
+[project]
+name = "nimble_tasks"
+version = "0.1.0"
+description = "Nimble-Tasks"
+license = "Unlicense"
+author = "siriuslee69"
+
+[preset]
+name = "default"
+description = "Everything compiled, portable code."
+
+[nim]
+# opt = "speed"
+
+[define]
+danger = false
+
+[passC]
+flags = []
+
+[passL]
+flags = []
+
+[runtime]
+# start values; the program's config parser reads this table

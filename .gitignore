@@ -32,3 +32,12 @@ PROJECTS.md
 TOOLS.md
 UI.md
 agents/.local*
+
+# migration top-up 2026-11-20
+build/
+builds/
+nimcache*/
+*.exe
+*.trash
+.otter/
+.local/

@@ -92,6 +92,8 @@ proc compileAndRun(A: seq[string]) =
     helper: string = parallelHelper()
     flags: string = " -d:release" & presetFlag() & " " & overrideOf(nimFlags) & " --hints:off"
     jobs: string = ""
+  if enterGtkShell():
+    return
   mkDir(joinPath("build", "evaluation"))
   if helper.len == 0:
     for p in A:

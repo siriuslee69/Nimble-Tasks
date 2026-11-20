@@ -1,6 +1,18 @@
 # Progress
 
-Commit Message: Add runStress: attack*.nim and stress*.nim below evaluation/stress
+Commit Message: GTK hop: runOwl, buildOwl, buildAll and the evaluation tasks run again inside the repo's nix shell when GTK4 is not visible
+
+2026-11-20: `enterGtkShell()` (frontends.nims). Trigger: plain `nimble runOwl` in MimicWidgets died at
+the link step (`ld: cannot find harfbuzz`) because the user's session sets PKG_CONFIG_PATH to some GTK
+folders but not harfbuzz. The task now checks `pkg-config --exists gtk4`; when it fails, and the repo
+has an owl entry and a shell file (`nixShell` const, else nix/owlkettle-shell.nix, else nix/shell.nix),
+and IN_NIX_SHELL is empty, nix-shell exists and no `nimCommand` is set, it runs the same nimble call
+(`calledParams()` keeps the arguments) inside `nix-shell <file> --run`. It RETURNS true instead of
+calling `quit`: a `quit(0)` inside a task makes nimble print "Failed to execute task". Repo-own
+tasks call it as `if enterGtkShell(): return`. Tests: suite "GTK shell hop" (fake nix-shell and
+pkg-config first on PATH; hop, no hop inside a shell, no hop when GTK is visible, no hop without a
+window). Checked for real: MimicWidgets `nimble runOwl` (window up), `nimble previewGallery` (exit 0).
+Not changed: repos that set `nimCommand` (Atlas-PackageManager) keep their own wrapper.
 
 2026-11-19: `runStress` runs `evaluation/stress/**/attack*.nim` and `stress*.nim` the same
 way `runTests` runs tests (built together, run one at a time). `programsIn` takes several

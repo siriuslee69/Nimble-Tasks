@@ -50,12 +50,27 @@ nimble runCli          # runs the repo's command-line frontend
 │                           │ owlEntry, serverEntry, androidDir       │
 │                           │ nimFlags, webuiFlags, cliFlags, …       │
 │                           │ nimCommand        compiler or wrapper  │
+│                           │ nixShell          GTK shell file       │
 │                           │ frozenSubmodules  never auto-updated    │
 │                           │ extraArtifacts    autopush refuses them │
 └──────────────────────────┴──────────────────────────────────────────┘
 ```
 
 There is no config file. Everything is a `const` in the repo's own `.nimble`.
+
+**GTK on NixOS needs no `nix-shell` typed by hand.** A repo with a window (an owl entry) and a
+shell file (`nix/owlkettle-shell.nix`, else `nix/shell.nix`, else the `nixShell` const) gets this:
+
+```
+you type:   nimble runOwl
+  1. GTK4 visible?  (pkg-config --exists gtk4)      yes -> the task runs here, nothing else happens
+  2. no, and IN_NIX_SHELL is empty, nix-shell exists, no `nimCommand` set
+        -> nix-shell nix/owlkettle-shell.nix --run 'nimble runOwl'     (same arguments)
+  3. inside that shell step 1 says yes, so the task runs there, once
+```
+
+`runOwl`, `buildOwl`, `buildAll` and every evaluation task (`test`, `runExamples`, ...) do this.
+A repo's own task calls it first with `if enterGtkShell(): return`.
 
 ---
 
@@ -324,6 +339,15 @@ Nimble-Tasks not found                   neither ../Nimble-Tasks nor the
 my `const webuiEntry` is ignored         it must come BEFORE the include
 evaluate fails on Windows                otter-gate is a shell script; run it
                                          from Git Bash or WSL
+link ends with `cannot find harfbuzz`    GTK4 is not visible and the hop to the
+or `gtk4 was not found`                  nix shell was skipped (IN_NIX_SHELL set,
+                                         no shell file, no nix-shell, or the repo
+                                         sets `nimCommand`). Run by hand:
+                                         nix-shell nix/owlkettle-shell.nix
+                                         --run 'nimble runOwl'
+`nimbleTasksParallelBuild: symbol        build/nimbleTasksParallelBuild was built
+lookup error ... GLIBC_PRIVATE`          before a system update. Move it and its
+                                         .src file aside; the next run rebuilds it
 a git command acts on the wrong repo     only ever call git through
                                          `captureGit`/`gitRaw`: plain gorgeEx
                                          runs in Nimble-Tasks' own folder

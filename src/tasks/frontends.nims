@@ -40,6 +40,18 @@
 ## run*   -> nim c -r, debug build, cache in build/nimcache_<frontend>
 ## build* -> nim c -d:release, program in build/<package>_<frontend>
 ## Neither finds a file? It stops and lists every place it looked.
+##
+## GTK without typing `nix-shell`: runOwl, buildOwl, buildAll and the
+## evaluation tasks call `enterGtkShell()` first. When ALL of these hold, the
+## same nimble call is run again inside the repo's nix shell, once:
+##
+##   the repo has an owl entry          and a shell file (`nixShell` const,
+##                                      else nix/owlkettle-shell.nix, else
+##                                      nix/shell.nix)
+##   not Windows, IN_NIX_SHELL unset    nix-shell exists
+##   the repo sets no `nimCommand`      `pkg-config --exists gtk4` fails here
+##
+## Any "no" and the task runs where it stands, as before.
 
 proc candidatesOf(kind: string): seq[string] =
   ## kind: webui | cli | tui | owl | server
@@ -118,12 +130,63 @@ proc entryOf(kind: string): string =
       "Entry: string = \"path/to/file.nim\"` before the include.")
   result = t
 
+proc gtkShellFile(): string =
+  ## The nix shell that holds this repo's GTK libraries: its own `nixShell`
+  ## const, else nix/owlkettle-shell.nix, else nix/shell.nix. "" when none.
+  var
+    t: string = overrideOf(nixShell)
+  if t.len == 0:
+    t = firstExisting(["nix/owlkettle-shell.nix", "nix/shell.nix"])
+  result = t
+
+proc needsGtkShell(): bool =
+  ## true only when ALL hold; any "no" leaves the task running where it is:
+  ##   not Windows, not already inside a nix shell, the repo names no compiler
+  ##   wrapper of its own, it has a GTK window (owl entry) and a shell file,
+  ##   nix-shell exists, and pkg-config cannot see GTK4 from here.
+  result = false
+  when defined(windows):
+    return
+  if getEnv("IN_NIX_SHELL").len > 0 or overrideOf(nimCommand).len > 0:
+    return
+  if gtkShellFile().len == 0 or findEntry("owl").len == 0:
+    return
+  if gorgeEx("command -v nix-shell").exitCode != 0:
+    return
+  result = gorgeEx("pkg-config --exists gtk4").exitCode != 0
+
+proc enterGtkShell(): bool =
+  ## Runs this very nimble call again inside the repo's nix shell and returns
+  ## true: the task is done and must `return` at once. Returns false, having
+  ## done nothing, when `needsGtkShell` says no. (`quit` would make nimble
+  ## report "Failed to execute task", so the caller returns instead.)
+  ##
+  ##   nimble runOwl -d:preset=iot
+  ##     └─ GTK not visible ─▶ nix-shell nix/owlkettle-shell.nix --run 'nimble runOwl -d:preset=iot'
+  ##                              └─ IN_NIX_SHELL is set, so the second call runs the task
+  ##
+  ## A task calls it first:   if enterGtkShell(): return
+  var
+    cmd: string = "nimble"
+  result = false
+  if not needsGtkShell():
+    return
+  for a in calledParams():
+    cmd.add(" " & quoteShell(a))
+  echo "🌿 GTK4 is not visible here; running inside " & gtkShellFile()
+  exec "nix-shell " & quoteShell(gtkShellFile()) & " --run " & quoteShell(cmd)
+  result = true
+
 proc runFrontend(kind: string) =
+  if kind == "owl" and enterGtkShell():
+    return
   exec nimCompiler() & " c -r" & presetFlag() & " " & overrideFlags(kind) & " --nimcache:build/nimcache_" & kind &
     " -o:" & quoteShell(joinPath("build", exeName(packageTag() & "_" & kind & "_debug"))) &
     " " & quoteShell(entryOf(kind))
 
 proc buildFrontend(kind: string) =
+  if kind == "owl" and enterGtkShell():
+    return
   mkDir("build")
   exec nimCompiler() & " c -d:release" & presetFlag() & " " & overrideFlags(kind) & " --nimcache:build/nimcache_" &
     kind & "_release -o:" &
@@ -164,6 +227,8 @@ sharedTask buildServer, "Build the server for release":
 sharedTask buildAll, "Build every frontend this repo has, for release":
   var
     built: int = 0
+  if enterGtkShell():
+    return
   for kind in ["webui", "cli", "tui", "owl", "server"]:
     if findEntry(kind).len > 0:
       buildFrontend(kind)

@@ -85,6 +85,20 @@ proc calledTask(): string =
     t = normalize(paramStr(i + 2))
   result = t
 
+proc calledParams(): seq[string] =
+  ## The task name and everything typed after it, spelled as typed:
+  ## `nimble runOwl -d:preset=iot` -> @["runOwl", "-d:preset=iot"].
+  var
+    i: int = 1
+    T: seq[string] = @[]
+  while i <= paramCount() and not paramStr(i).endsWith(".nimble"):
+    i.inc
+  i = i + 2
+  while i <= paramCount():
+    T.add(paramStr(i))
+    i.inc
+  result = T
+
 proc isSharedCall(c: string): bool =
   ## c: normalized task name
   result = c in sharedTaskKeys and c notin repoOwnTasks

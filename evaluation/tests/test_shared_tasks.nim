@@ -247,3 +247,67 @@ suite "build presets (preset.nims)":
         "src/clients/cli/app_cli.nim 2>&1")
     check t.exitCode != 0
     check t.output.contains("configs/nope.toml")
+
+proc buildGtkFixture(): string {.role: helper.} =
+  ## gtk/ -- a repo with an owl window and a nix shell file, plus fake/bin with
+  ## a `pkg-config` that cannot see GTK4 and a `nix-shell` that logs its call,
+  ## sets IN_NIX_SHELL and runs the --run text. Returns the fake/bin folder.
+  var
+    dir: string = root / "gtk"
+    bin: string = dir / "fake" / "bin"
+  initRepo(dir)
+  writeFile(dir / "gtk.nimble", nimbleFile("", ""))
+  createDir(dir / "src" / "clients" / "owl")
+  writeFile(dir / "src" / "clients" / "owl" / "app.nim", "echo \"owl is alive\"\n")
+  createDir(dir / "nix")
+  writeFile(dir / "nix" / "shell.nix", "{}\n")
+  createDir(bin)
+  writeFile(bin / "pkg-config", "#!/bin/sh\nexit 1\n")
+  writeFile(bin / "nix-shell",
+    "#!/bin/sh\nfile=$1; shift; shift\nprintf '%s | %s\\n' \"$file\" \"$1\" >> " &
+    (dir / "shell.log") & "\nIN_NIX_SHELL=impure exec sh -c \"$1\"\n")
+  mustSh(dir, "chmod +x fake/bin/pkg-config fake/bin/nix-shell")
+  result = bin
+
+proc gtkRun(bin, env, args: string): tuple[output: string, exitCode: int] {.role: helper.} =
+  ## bin: the fake folder put first on PATH; env: extra `NAME=value` words;
+  ## args: what follows `nimble`.
+  result = sh(root / "gtk", env & " PATH=" & bin & ":$PATH nimble --silent " & args & " 2>&1")
+
+suite "GTK shell hop":
+  var
+    bin: string = buildGtkFixture()
+
+  # {.testKind: tkIntegration, covers: "enterGtkShell".}
+  test "runOwl runs again inside the nix shell when GTK4 is not visible":
+    var
+      t: tuple[output: string, exitCode: int] = gtkRun(bin, "", "runOwl -d:mark=1")
+    check t.exitCode == 0
+    check "running inside nix/shell.nix" in t.output
+    check "owl is alive" in t.output
+    check "nix/shell.nix | nimble runOwl -d:mark=1" in readFile(root / "gtk" / "shell.log")
+
+  # {.testKind: tkEdgeCase, covers: "needsGtkShell".}
+  test "already inside a nix shell, nothing hops again":
+    var
+      t: tuple[output: string, exitCode: int] = gtkRun(bin, "IN_NIX_SHELL=pure", "runOwl")
+    check t.exitCode == 0
+    check "running inside" notin t.output
+    check "owl is alive" in t.output
+
+  # {.testKind: tkEdgeCase, covers: "needsGtkShell".}
+  test "a shell that can see GTK4 is left alone":
+    var
+      t: tuple[output: string, exitCode: int] = ("", -1)
+    writeFile(bin / "pkg-config", "#!/bin/sh\nexit 0\n")
+    t = gtkRun(bin, "", "runOwl")
+    check t.exitCode == 0
+    check "running inside" notin t.output
+    check "owl is alive" in t.output
+
+  # {.testKind: tkEdgeCase, covers: "needsGtkShell".}
+  test "a repo with no window never hops":
+    var
+      t: tuple[output: string, exitCode: int] = nimble("app", "runCli")
+    check t.exitCode == 0
+    check "running inside" notin t.output

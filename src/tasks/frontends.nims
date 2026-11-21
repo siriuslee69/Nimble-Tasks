@@ -48,10 +48,10 @@
 ##   the repo has an owl entry          and a shell file (`nixShell` const,
 ##                                      else nix/owlkettle-shell.nix, else
 ##                                      nix/shell.nix)
-##   not Windows, IN_NIX_SHELL unset    nix-shell exists
+##   not Windows                       nix-shell exists
 ##   the repo sets no `nimCommand`      `pkg-config --exists gtk4` fails here
 ##
-## Any "no" and the task runs where it stands, as before.
+## A retry that still cannot see GTK4 reports the failed shell setup.
 
 proc candidatesOf(kind: string): seq[string] =
   ## kind: webui | cli | tui | owl | server
@@ -141,13 +141,13 @@ proc gtkShellFile(): string =
 
 proc needsGtkShell(): bool =
   ## true only when ALL hold; any "no" leaves the task running where it is:
-  ##   not Windows, not already inside a nix shell, the repo names no compiler
-  ##   wrapper of its own, it has a GTK window (owl entry) and a shell file,
+  ##   not Windows, the repo names no compiler wrapper of its own,
+  ##   it has a GTK window (owl entry) and a shell file,
   ##   nix-shell exists, and pkg-config cannot see GTK4 from here.
   result = false
   when defined(windows):
     return
-  if getEnv("IN_NIX_SHELL").len > 0 or overrideOf(nimCommand).len > 0:
+  if overrideOf(nimCommand).len > 0:
     return
   if gtkShellFile().len == 0 or findEntry("owl").len == 0:
     return
@@ -163,14 +163,17 @@ proc enterGtkShell(): bool =
   ##
   ##   nimble runOwl -d:preset=iot
   ##     └─ GTK not visible ─▶ nix-shell nix/owlkettle-shell.nix --run 'nimble runOwl -d:preset=iot'
-  ##                              └─ IN_NIX_SHELL is set, so the second call runs the task
+  ##                              └─ GTK is checked again before running the task
   ##
   ## A task calls it first:   if enterGtkShell(): return
   var
-    cmd: string = "nimble"
+    dir: string = getCurrentDir()
+    cmd: string = "env NIMBLE_TASKS_GTK_SHELL=" & quoteShell(dir) & " nimble"
   result = false
   if not needsGtkShell():
     return
+  if getEnv("NIMBLE_TASKS_GTK_SHELL") == dir:
+    stop("GTK4 is still not visible inside " & gtkShellFile() & ". Check `pkg-config --print-errors --exists gtk4` there.")
   for a in calledParams():
     cmd.add(" " & quoteShell(a))
   echo "🌿 GTK4 is not visible here; running inside " & gtkShellFile()

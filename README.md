@@ -60,18 +60,19 @@ nimble runExamples     # builds a tiny repo from examples/example_useSharedTasks
 There is no config file. Everything is a `const` in the repo's own `.nimble`.
 
 **GTK on NixOS needs no `nix-shell` typed by hand.** A repo with a window (an owl entry) and a
-shell file (`nix/owlkettle-shell.nix`, else `nix/shell.nix`, else the `nixShell` const) gets this:
+shell file (the `nixShell` const, else `nix/owlkettle-shell.nix`, else `nix/shell.nix`) gets this:
 
 ```
 you type:   nimble runOwl
   1. GTK4 visible?  (pkg-config --exists gtk4)      yes -> the task runs here, nothing else happens
-  2. no, and IN_NIX_SHELL is empty, nix-shell exists, no `nimCommand` set
-        -> nix-shell nix/owlkettle-shell.nix --run 'nimble runOwl'     (same arguments)
-  3. inside that shell step 1 says yes, so the task runs there, once
+  2. GTK4 missing and nix-shell available, with no `nimCommand` set
+        -> rerun the task with the same arguments inside nix/owlkettle-shell.nix
+  3. Check GTK4 again in the project shell. If it is still missing, report the error.
 ```
 
 `runOwl`, `buildOwl`, `buildAll` and every evaluation task (`test`, `runExamples`, ...) do this.
 A repo's own task calls it first with `if enterGtkShell(): return`.
+The check also runs when the task starts inside another Nix shell.
 
 ---
 
@@ -350,8 +351,8 @@ my `const webuiEntry` is ignored         it must come BEFORE the include
 evaluate fails on Windows                otter-gate is a shell script; run it
                                          from Git Bash or WSL
 link ends with `cannot find harfbuzz`    GTK4 is not visible and the hop to the
-or `gtk4 was not found`                  nix shell was skipped (IN_NIX_SHELL set,
-                                         no shell file, no nix-shell, or the repo
+or `gtk4 was not found`                  nix shell was skipped (no shell file,
+                                         no nix-shell, or the repo
                                          sets `nimCommand`). Run by hand:
                                          nix-shell nix/owlkettle-shell.nix
                                          --run 'nimble runOwl'

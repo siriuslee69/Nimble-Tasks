@@ -1,6 +1,17 @@
 # Progress
 
-Commit Message: runExamples sets NIMBLE_UNATTENDED=1 so window examples close themselves (done-check no longer hangs on them)
+Commit Message: Retry GTK tasks from an existing Nix shell when GTK4 is missing
+
+## GTK shell handoff for MimicWidgets
+
+`nimble runOwlLab` used to skip the project shell whenever `IN_NIX_SHELL`
+was set. The shared launcher checks for GTK inside existing Nix shells too.
+The retry is marked for that project and reports an error if GTK4 is still
+missing. Tested the retry, the working environment, and the broken project
+shell in `nimble test`. Opened and closed the real lab from a Nix shell
+with `pkg-config` and no GTK4.
+
+## Earlier work
 
 2026-11-20: `enterGtkShell()` (frontends.nims). Trigger: plain `nimble runOwl` in MimicWidgets died at
 the link step (`ld: cannot find harfbuzz`) because the user's session sets PKG_CONFIG_PATH to some GTK

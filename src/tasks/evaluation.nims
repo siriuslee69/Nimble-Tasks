@@ -9,6 +9,7 @@
 ##   runBenchmarks  evaluation/benchmarks/    bench*.nim
 ##   runStatistics  evaluation/statistics/    stat*.nim
 ##   runExamples    examples/                 *.nim
+##                  (sets NIMBLE_UNATTENDED=1: a window example closes itself)
 ##   test           = runTests
 ##   evaluate       Otter's whole-repo check, right now (otter-gate --force)
 ##
@@ -132,6 +133,9 @@ sharedTask runStatistics, "Run every evaluation/statistics/**/stat*.nim":
   compileAndRun(programsIn("evaluation/statistics", "stat"))
 
 sharedTask runExamples, "Run every examples/**/*.nim":
+  ## NIMBLE_UNATTENDED=1 tells an example that nobody is watching: one that
+  ## opens a window shows it briefly and closes itself (it would wait forever).
+  putEnv("NIMBLE_UNATTENDED", "1")
   compileAndRun(programsIn("examples", ""))
 
 sharedTask evaluate, "Measure the repo with Otter now (secrets, nesting, roles, layout)":

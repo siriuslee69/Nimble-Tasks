@@ -156,10 +156,19 @@ evaluation   test = runTests     evaluation/tests/**/test*.nim
              runStress           evaluation/stress/**/attack*.nim, stress*.nim
              runBenchmarks       evaluation/benchmarks/**/bench*.nim
              runStatistics       evaluation/statistics/**/stat*.nim
-             runExamples         examples/**/*.nim
+             runExamples         examples/**/*.nim  (sets NIMBLE_UNATTENDED=1)
              evaluate            Otter's whole-repo check, now
 other        clean               delete build/ and nimcache/
              sharedTasks         print this list
+```
+
+`runExamples` sets `NIMBLE_UNATTENDED=1`: nobody watches its programs, so an example that opens a
+window should show it for a moment and close itself (it would otherwise wait until someone
+closes it, and `done-check.sh` would time out):
+
+```nim
+if getEnv("NIMBLE_UNATTENDED") == "1":
+  afterMs(1500, proc () = quit(0))      # or the toolkit's own one-shot timer
 ```
 
 The evaluation tasks build every program FIRST, side by side (one per CPU core,

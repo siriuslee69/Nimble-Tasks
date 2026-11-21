@@ -1,6 +1,6 @@
 # Progress
 
-Commit Message: GTK hop: runOwl, buildOwl, buildAll and the evaluation tasks run again inside the repo's nix shell when GTK4 is not visible
+Commit Message: runExamples sets NIMBLE_UNATTENDED=1 so window examples close themselves (done-check no longer hangs on them)
 
 2026-11-20: `enterGtkShell()` (frontends.nims). Trigger: plain `nimble runOwl` in MimicWidgets died at
 the link step (`ld: cannot find harfbuzz`) because the user's session sets PKG_CONFIG_PATH to some GTK

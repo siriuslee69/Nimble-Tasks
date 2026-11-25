@@ -180,9 +180,35 @@ proc enterGtkShell(): bool =
   exec "nix-shell " & quoteShell(gtkShellFile()) & " --run " & quoteShell(cmd)
   result = true
 
+proc buildCompanions() =
+  ## Programs a window calls and so needs built beside it (ExpertForge opens
+  ## Atlas-Explorer as its file chooser). Set before the include:
+  ##
+  ##   const companions = ["Atlas-Explorer buildOwl"]
+  ##
+  ## "<repo> <task>": the repo is looked for next to this one, then under
+  ## submodules/; its nimble task is run there. A missing repo stops the build.
+  when declared(companions):
+    var
+      parts: seq[string] = @[]
+      dir: string = ""
+    for c in companions:
+      parts = c.splitWhitespace()
+      if parts.len != 2:
+        stop("companions: write \"<repo> <task>\", got \"" & c & "\"")
+      dir = joinPath("..", parts[0])
+      if not dirExists(dir):
+        dir = joinPath("submodules", parts[0])
+      if not dirExists(dir):
+        stop("companion " & parts[0] & " not found next to this repo or under submodules/")
+      echo "🌿 building companion " & parts[0] & " (" & parts[1] & ")"
+      exec "cd " & quoteShell(dir) & " && nimble " & parts[1]
+
 proc runFrontend(kind: string) =
   if kind == "owl" and enterGtkShell():
     return
+  if kind == "owl":
+    buildCompanions()
   exec nimCompiler() & " c -r" & presetFlag() & " " & overrideFlags(kind) & " --nimcache:build/nimcache_" & kind &
     " -o:" & quoteShell(joinPath("build", exeName(packageTag() & "_" & kind & "_debug"))) &
     " " & quoteShell(entryOf(kind))
@@ -190,6 +216,8 @@ proc runFrontend(kind: string) =
 proc buildFrontend(kind: string) =
   if kind == "owl" and enterGtkShell():
     return
+  if kind == "owl":
+    buildCompanions()
   mkDir("build")
   exec nimCompiler() & " c -d:release" & presetFlag() & " " & overrideFlags(kind) & " --nimcache:build/nimcache_" &
     kind & "_release -o:" &

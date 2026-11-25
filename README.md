@@ -54,6 +54,10 @@ nimble runExamples     # builds a tiny repo from examples/example_useSharedTasks
 │                           │ nixShell          GTK shell file       │
 │                           │ frozenSubmodules  never auto-updated    │
 │                           │ extraArtifacts    autopush refuses them │
+│                           │ companions        other repos runOwl /  │
+│                           │                   buildOwl build first  │
+│                           │                   ("Atlas-Explorer      │
+│                           │                    buildOwl")           │
 └──────────────────────────┴──────────────────────────────────────────┘
 ```
 
